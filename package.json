@@ -16,5 +16,9 @@
   },
   "scripts": {
     "test": "node test/smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ApiCartOps/github-multi-mcp.git"
   }
 }
