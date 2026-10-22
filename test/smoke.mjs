@@ -42,10 +42,12 @@ const cli = (...a) => new Promise((resolve) => {
 assert.match((await cli("add", "personal", "--token-env=T1")).stdout, /alice/);
 assert.match((await cli("add", "org", "--token-env=T2")).stdout, /ApiCartOps/);
 assert.equal((await cli("add", "bad", "--token-env=NOPE")).status, 1);
-const listOut = (await cli("list")).stdout;
+const listOut = (await cli("list", "--json")).stdout;
 const list = JSON.parse(listOut);
 assert.deepEqual(list.map((a) => [a.name, a.login, a.default]), [["personal", "alice", true], ["org", "ApiCartOps", false]]);
 assert.ok(!listOut.includes("tok_"), "list must not leak tokens");
+const pretty = (await cli("list")).stdout;
+assert.match(pretty, /\* personal\s+alice\s+\(default\)/); assert.match(pretty, /org\s+ApiCartOps/); assert.ok(!pretty.includes("tok_"));
 console.log("cli add/list ok");
 
 // MCP over stdio

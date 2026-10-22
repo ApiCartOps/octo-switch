@@ -21,11 +21,23 @@ Most GitHub MCP setups use one token. This keeps several named accounts and pick
 ## Setup
 
 ```bash
+git clone https://github.com/ApiCartOps/github-multi-mcp.git octoswitch
+cd octoswitch
 npm install
-node src/cli.js add personal --default
-node src/cli.js add work
-node src/cli.js list
+npm link                      # puts the `octoswitch` command on your PATH
+
+octoswitch add personal --default
+octoswitch add work
+octoswitch list
 ```
+
+```text
+  NAME      LOGIN
+* personal  alice  (default)
+  work      acme-corp
+```
+
+Without `npm link`, run `node src/cli.js` in place of `octoswitch`.
 
 `add` asks for the token at a hidden prompt (or reads it from an env var with `--token-env=VAR`), checks it against GitHub and stores the login. Tokens are never passed on the command line, never printed, and never returned by any tool. They are stored in `~/.octoswitch/accounts.json` (file mode 600).
 
@@ -34,10 +46,10 @@ Use a fine-grained or classic personal access token per account. For org repos t
 ## Connect it to your agent
 
 ```bash
-node src/cli.js agents                 # what is supported, and what looks installed
-node src/cli.js install cursor         # or: claude-code, vscode, codex, gemini-cli, ... or: all
-node src/cli.js install cursor --dry-run
-node src/cli.js config hermes          # print the snippet instead of editing anything
+octoswitch agents                 # what is supported, and what looks installed
+octoswitch install cursor         # or: claude-code, vscode, codex, gemini-cli, ... or: all
+octoswitch install cursor --dry-run
+octoswitch config hermes          # print the snippet instead of editing anything
 ```
 
 `install` merges one entry into the agent's user-level MCP config and leaves everything else in the file alone. It refuses to touch a file it cannot parse (for example JSON with comments) and prints the snippet instead. `uninstall <agent>` removes it. Restart the agent afterwards.
@@ -63,8 +75,8 @@ Config locations differ between versions of these tools, so check the printed pa
 ### Project instructions
 
 ```bash
-node src/cli.js init              # AGENTS.md, plus any of CLAUDE.md / GEMINI.md / copilot / cursor rule that already exist
-node src/cli.js init --all        # write all five
+octoswitch init              # AGENTS.md, plus any of CLAUDE.md / GEMINI.md / copilot / cursor rule that already exist
+octoswitch init --all        # write all five
 ```
 
 This adds a short, marked block telling the agent to use the `gh_*` tools and to confirm the account before any write. Re-running updates the block in place. `AGENTS.md` is read by Codex, Cursor, Copilot, Windsurf, opencode, Zed and others; the other files cover Claude Code (`CLAUDE.md`), Gemini CLI (`GEMINI.md`), GitHub Copilot (`.github/copilot-instructions.md`) and Cursor (`.cursor/rules/octoswitch.mdc`).
@@ -90,7 +102,7 @@ This adds a short, marked block telling the agent to use the `gh_*` tools and to
 | Command | Description |
 |---|---|
 | `add <name> [--token-env=VAR] [--default]` | Add or replace an account |
-| `list` | Show accounts (no tokens) |
+| `list [--json]` | Show accounts (no tokens) |
 | `default <name>` | Set the default account |
 | `remove <name>` | Remove an account |
 | `agents` | List supported agents |

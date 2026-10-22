@@ -9,7 +9,7 @@ const HELP = `octoswitch: one MCP server, every GitHub account
 
   add <name> [--token-env=VAR] [--default]   Add an account. The token is read from the
                                              env var VAR, or typed at a hidden prompt.
-  list                                       Show accounts (never prints tokens)
+  list [--json]                              Show accounts (never prints tokens)
   default <name>                             Set the default account
   remove <name>                              Remove an account
   mcp                                        Run as an MCP server over stdio
@@ -42,7 +42,7 @@ const { values, positionals } = parseArgs({
   options: {
     "token-env": { type: "string" }, default: { type: "boolean" }, name: { type: "string", default: "octoswitch" },
     npx: { type: "boolean" }, "dry-run": { type: "boolean" }, dir: { type: "string", default: "." },
-    only: { type: "string" }, all: { type: "boolean" },
+    only: { type: "string" }, all: { type: "boolean" }, json: { type: "boolean" },
   },
 });
 const [cmd, name] = positionals;
@@ -58,7 +58,15 @@ try {
       console.log(`Saved "${name}" (GitHub user ${login}).`);
       break;
     }
-    case "list": console.log(JSON.stringify(listAccounts(), null, 2)); break;
+    case "list": {
+      const accts = listAccounts();
+      if (values.json) { console.log(JSON.stringify(accts, null, 2)); break; }
+      if (!accts.length) { console.log("No accounts yet. Add one with: octoswitch add <name>"); break; }
+      const w = Math.max(4, ...accts.map((a) => a.name.length));
+      console.log(`  ${"NAME".padEnd(w)}  LOGIN`);
+      for (const a of accts) console.log(`${a.default ? "*" : " "} ${a.name.padEnd(w)}  ${a.login}${a.default ? "  (default)" : ""}`);
+      break;
+    }
     case "default": setDefault(name); console.log(`Default is now "${name}".`); break;
     case "remove": removeAccount(name); console.log(`Removed "${name}".`); break;
     case "agents":
