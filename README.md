@@ -1,6 +1,6 @@
 # github-multi-mcp
 
-A small MCP server and CLI for GitHub that manages **multiple accounts** (personal, work, orgs) and routes each call to the right token.
+An MCP server and CLI for GitHub that manages **multiple accounts** (personal, work, orgs) and routes each call to the right token. It speaks plain MCP over stdio, so it works with any MCP-capable agent: Claude Code and Desktop, Cursor, GitHub Copilot (VS Code), Windsurf, Cline, Gemini CLI, Codex CLI, opencode, Continue, Hermes Agent, Zed and others.
 
 Not affiliated with or endorsed by GitHub.
 
@@ -25,24 +25,74 @@ node src/cli.js list
 
 Use a fine-grained or classic personal access token per account. For org repos the token must be allowed by the org.
 
+## Connect it to your agent
+
+```bash
+node src/cli.js agents                 # what is supported, and what looks installed
+node src/cli.js install cursor         # or: claude-code, vscode, codex, gemini-cli, ... or: all
+node src/cli.js install cursor --dry-run
+node src/cli.js config hermes          # print the snippet instead of editing anything
+```
+
+`install` merges one entry into the agent's user-level MCP config and leaves everything else in the file alone. It refuses to touch a file it cannot parse (for example JSON with comments) and prints the snippet instead. `uninstall <agent>` removes it. Restart the agent afterwards.
+
+| Agent | Id | What `install` does |
+|---|---|---|
+| Claude Code | `claude-code` | `mcpServers` in `~/.claude.json`, plus the skill and slash commands below |
+| Claude Desktop | `claude-desktop` | `mcpServers` in `claude_desktop_config.json` |
+| Cursor | `cursor` | `mcpServers` in `~/.cursor/mcp.json` |
+| VS Code / GitHub Copilot | `vscode` | `servers` in the user `mcp.json` |
+| Windsurf | `windsurf` | `~/.codeium/windsurf/mcp_config.json` |
+| Cline | `cline` | `cline_mcp_settings.json` |
+| Gemini CLI | `gemini-cli` | `mcpServers` in `~/.gemini/settings.json` |
+| opencode | `opencode` | `mcp` in `~/.config/opencode/opencode.json` |
+| Codex CLI | `codex` | `[mcp_servers.github-multi]` in `~/.codex/config.toml` |
+| Continue | `continue` | `~/.continue/mcpServers/github-multi.yaml` |
+| Hermes Agent | `hermes` | prints a YAML snippet for `~/.hermes/config.yaml` |
+| Zed | `zed` | prints a snippet for `settings.json` |
+| anything else | `generic` | prints the standard `mcpServers` JSON |
+
+Config locations differ between versions of these tools, so check the printed path if an agent does not pick it up. Use `--npx` to register `npx -y github-multi-mcp mcp` instead of a path to this checkout (once published), and `--name=NAME` to use a different server name.
+
+### Project instructions
+
+```bash
+node src/cli.js init              # AGENTS.md, plus any of CLAUDE.md / GEMINI.md / copilot / cursor rule that already exist
+node src/cli.js init --all        # write all five
+```
+
+This adds a short, marked block telling the agent to use the `gh_*` tools and to confirm the account before any write. Re-running updates the block in place. `AGENTS.md` is read by Codex, Cursor, Copilot, Windsurf, opencode, Zed and others; the other files cover Claude Code (`CLAUDE.md`), Gemini CLI (`GEMINI.md`), GitHub Copilot (`.github/copilot-instructions.md`) and Cursor (`.cursor/rules/github-multi.mdc`).
+
+## What it exposes
+
+**Tools** (all agents):
+
+| Read | Write (act on a real account; agents are told to confirm first) |
+|---|---|
+| `gh_list_accounts`, `gh_whoami`, `gh_list_repos`, `gh_get_repo`, `gh_list_issues`, `gh_get_issue`, `gh_list_prs`, `gh_get_pr`, `gh_search_issues`, `gh_get_file` | `gh_create_repo` (private by default), `gh_create_issue`, `gh_comment_issue`, `gh_create_pr` |
+
+**Server instructions**: the same guidance as above is sent in the MCP `initialize` response, so clients that surface it need no extra setup.
+
+**Prompts** (commands, for clients that support MCP prompts): `gh_accounts`, `gh_triage`, `gh_review_pr`, `gh_new_issue`. They take one optional argument such as `owner/repo` or `owner/repo 42`.
+
+**Resource**: `github-multi://accounts` (names and logins only).
+
+**Claude Code extras** (installed by `install claude-code`): the `github-multi` skill in `~/.claude/skills/` and the slash commands `/gh-accounts`, `/gh-triage`, `/gh-review-pr`, `/gh-new-issue` in `~/.claude/commands/`. The sources live in [`content/`](content), including a standard `SKILL.md` you can copy into any agent that supports Agent Skills.
+
+## CLI reference
+
 | Command | Description |
 |---|---|
 | `add <name> [--token-env=VAR] [--default]` | Add or replace an account |
 | `list` | Show accounts (no tokens) |
 | `default <name>` | Set the default account |
 | `remove <name>` | Remove an account |
+| `agents` | List supported agents |
+| `install <agent\|all> [--name=N] [--npx] [--dry-run]` | Register the server with an agent |
+| `uninstall <agent>` | Remove it |
+| `config <agent>` | Print the snippet |
+| `init [--dir=.] [--only=a,b] [--all]` | Write project instruction files |
 | `mcp` | Run as an MCP server over stdio |
-
-## MCP tools
-
-Read: `gh_list_accounts`, `gh_whoami`, `gh_list_repos`, `gh_get_repo`, `gh_list_issues`.
-Write: `gh_create_repo` (private by default), `gh_create_issue`, `gh_create_pr`.
-
-Write tools act on the real account, so clients should confirm the account and details with the user first.
-
-```bash
-claude mcp add github-multi --scope user -- node /absolute/path/to/github-multi-mcp/src/cli.js mcp
-```
 
 ## Test
 
@@ -50,7 +100,7 @@ claude mcp add github-multi --scope user -- node /absolute/path/to/github-multi-
 npm test
 ```
 
-Runs against a fake GitHub API with a temporary config folder; no real accounts are touched.
+Runs against a fake GitHub API with temporary config and home folders; no real accounts or agent configs are touched.
 
 ## License
 
