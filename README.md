@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/logo.svg" width="96" alt="Octoswitch logo"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/ApiCartOps/github-multi-mcp/main/assets/logo.svg" width="96" alt="Octoswitch logo"></p>
 
 <h1 align="center">Octoswitch</h1>
 
