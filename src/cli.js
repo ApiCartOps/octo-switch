@@ -5,7 +5,7 @@ import { listAccounts, saveAccount, removeAccount, setDefault, storePath } from 
 import { whoamiToken } from "./github.js";
 import { AGENTS, detect, install, uninstall, serverCommand, init, defaultTargets, initTargets } from "./agents.js";
 
-const HELP = `github-multi-mcp: GitHub MCP server with multiple accounts
+const HELP = `octoswitch: one MCP server, every GitHub account
 
   add <name> [--token-env=VAR] [--default]   Add an account. The token is read from the
                                              env var VAR, or typed at a hidden prompt.
@@ -40,7 +40,7 @@ function promptHidden(question) {
 const { values, positionals } = parseArgs({
   allowPositionals: true,
   options: {
-    "token-env": { type: "string" }, default: { type: "boolean" }, name: { type: "string", default: "github-multi" },
+    "token-env": { type: "string" }, default: { type: "boolean" }, name: { type: "string", default: "octoswitch" },
     npx: { type: "boolean" }, "dry-run": { type: "boolean" }, dir: { type: "string", default: "." },
     only: { type: "string" }, all: { type: "boolean" },
   },
@@ -73,7 +73,7 @@ try {
         try { console.log(install(id, values.name, cmd, { dryRun: values["dry-run"] })); }
         catch (e) { if (ids.length === 1) throw e; console.log(`${id}: skipped (${e.message})`); }
       }
-      if (!values["dry-run"] && ids.length) console.log("Restart the agent, then add an account if you have not: github-multi-mcp add <name>");
+      if (!values["dry-run"] && ids.length) console.log("Restart the agent, then add an account if you have not: octoswitch add <name>");
       break;
     }
     case "uninstall": if (!name) throw new Error("Usage: uninstall <agent>"); console.log(uninstall(name, values.name)); break;

@@ -31,7 +31,7 @@ const port = server.address().port;
 
 const home = fs.mkdtempSync(path.join(os.tmpdir(), "ghmm-"));
 const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), "ghmm-home-"));
-const env = { ...process.env, HOME: fakeHome, USERPROFILE: fakeHome, APPDATA: path.join(fakeHome, "AppData"), XDG_CONFIG_HOME: path.join(fakeHome, ".config"), GITHUB_MULTI_MCP_HOME: home, GITHUB_API_URL: `http://127.0.0.1:${port}`, T1: "tok_personal", T2: "tok_org" };
+const env = { ...process.env, HOME: fakeHome, USERPROFILE: fakeHome, APPDATA: path.join(fakeHome, "AppData"), XDG_CONFIG_HOME: path.join(fakeHome, ".config"), OCTOSWITCH_HOME: home, GITHUB_API_URL: `http://127.0.0.1:${port}`, T1: "tok_personal", T2: "tok_org" };
 // Async spawn: the fake GitHub server lives in this process, so a blocking spawnSync would deadlock.
 const cli = (...a) => new Promise((resolve) => {
   const c = spawn("node", ["src/cli.js", ...a], { env });
@@ -92,7 +92,7 @@ const prompts = (await rpc(11, "prompts/list", {})).result.prompts.map((x) => x.
 assert.deepEqual(prompts.sort(), ["gh_accounts", "gh_new_issue", "gh_review_pr", "gh_triage"]);
 const pr = (await rpc(12, "prompts/get", { name: "gh_triage", arguments: { arguments: "a/b" } })).result.messages[0].content.text;
 assert.match(pr, /Triage issues in a\/b/); assert.ok(!pr.includes("$ARGUMENTS"));
-const res = JSON.parse((await rpc(13, "resources/read", { uri: "github-multi://accounts" })).result.contents[0].text);
+const res = JSON.parse((await rpc(13, "resources/read", { uri: "octoswitch://accounts" })).result.contents[0].text);
 assert.equal(res.length, 2); assert.ok(!JSON.stringify(res).includes("tok_"));
 console.log("mcp tools/prompts/resources ok");
 p.kill(); server.close();
@@ -104,22 +104,22 @@ const rd = (f) => JSON.parse(fs.readFileSync(f, "utf8"));
 fs.mkdirSync(cfgOf(".cursor"), { recursive: true });
 fs.writeFileSync(cfgOf(".cursor", "mcp.json"), JSON.stringify({ mcpServers: { other: { command: "x" } } }));
 assert.match((await cli("install", "cursor", "--dry-run")).stdout, /would add/);
-assert.ok(!("github-multi" in rd(cfgOf(".cursor", "mcp.json")).mcpServers), "dry run must not write");
+assert.ok(!("octoswitch" in rd(cfgOf(".cursor", "mcp.json")).mcpServers), "dry run must not write");
 await cli("install", "cursor");
 let c = rd(cfgOf(".cursor", "mcp.json")).mcpServers;
-assert.equal(c.other.command, "x"); assert.equal(c["github-multi"].command, "node"); assert.match(c["github-multi"].args.at(-1), /^mcp$/);
+assert.equal(c.other.command, "x"); assert.equal(c["octoswitch"].command, "node"); assert.match(c["octoswitch"].args.at(-1), /^mcp$/);
 assert.match((await cli("install", "cursor")).stdout, /already installed/);
 await cli("install", "vscode"); // user-level mcp.json uses "servers" + type
-assert.equal(rd(cfgOf("AppData", "Code", "User", "mcp.json")).servers["github-multi"].type, "stdio");
+assert.equal(rd(cfgOf("AppData", "Code", "User", "mcp.json")).servers["octoswitch"].type, "stdio");
 await cli("install", "opencode");
-assert.equal(rd(cfgOf(".config", "opencode", "opencode.json")).mcp["github-multi"].type, "local");
+assert.equal(rd(cfgOf(".config", "opencode", "opencode.json")).mcp["octoswitch"].type, "local");
 await cli("install", "codex");
 const toml = fs.readFileSync(cfgOf(".codex", "config.toml"), "utf8");
-assert.match(toml, /\[mcp_servers\.github-multi\]/);
+assert.match(toml, /\[mcp_servers\.octoswitch\]/);
 await cli("install", "claude-code");
-assert.ok(fs.existsSync(cfgOf(".claude", "skills", "github-multi", "SKILL.md")));
+assert.ok(fs.existsSync(cfgOf(".claude", "skills", "octoswitch", "SKILL.md")));
 assert.ok(fs.existsSync(cfgOf(".claude", "commands", "gh-triage.md")));
-assert.equal(rd(cfgOf(".claude.json")).mcpServers["github-multi"].type, "stdio");
+assert.equal(rd(cfgOf(".claude.json")).mcpServers["octoswitch"].type, "stdio");
 assert.match((await cli("install", "hermes")).stdout, /mcp_servers:/);
 // refuses to clobber a config it cannot parse
 fs.mkdirSync(cfgOf(".gemini"), { recursive: true }); fs.writeFileSync(cfgOf(".gemini", "settings.json"), BAD_JSON);
@@ -127,8 +127,8 @@ assert.equal((await cli("install", "gemini-cli")).status, 1);
 assert.equal(fs.readFileSync(cfgOf(".gemini", "settings.json"), "utf8"), BAD_JSON);
 // uninstall
 await cli("uninstall", "cursor"); assert.deepEqual(Object.keys(rd(cfgOf(".cursor", "mcp.json")).mcpServers), ["other"]);
-await cli("uninstall", "codex"); assert.ok(!/github-multi/.test(fs.readFileSync(cfgOf(".codex", "config.toml"), "utf8")));
-await cli("uninstall", "claude-code"); assert.ok(!fs.existsSync(cfgOf(".claude", "skills", "github-multi")));
+await cli("uninstall", "codex"); assert.ok(!/octoswitch/.test(fs.readFileSync(cfgOf(".codex", "config.toml"), "utf8")));
+await cli("uninstall", "claude-code"); assert.ok(!fs.existsSync(cfgOf(".claude", "skills", "octoswitch")));
 assert.equal(Object.keys(rd(cfgOf(".claude.json")).mcpServers).length, 0);
 console.log("agent install/uninstall ok");
 
@@ -137,10 +137,10 @@ const proj = fs.mkdtempSync(path.join(os.tmpdir(), "ghmm-proj-"));
 fs.writeFileSync(path.join(proj, "CLAUDE.md"), "# Mine\n");
 await cli("init", `--dir=${proj}`); await cli("init", `--dir=${proj}`);
 const claudeMd = fs.readFileSync(path.join(proj, "CLAUDE.md"), "utf8");
-assert.ok(claudeMd.startsWith("# Mine") && claudeMd.split("github-multi-mcp:start").length === 2);
+assert.ok(claudeMd.startsWith("# Mine") && claudeMd.split("octoswitch:start").length === 2);
 assert.ok(fs.existsSync(path.join(proj, "AGENTS.md")) && !fs.existsSync(path.join(proj, "GEMINI.md")));
 await cli("init", `--dir=${proj}`, "--all");
-assert.match(fs.readFileSync(path.join(proj, ".cursor", "rules", "github-multi.mdc"), "utf8"), /^---\ndescription/);
+assert.match(fs.readFileSync(path.join(proj, ".cursor", "rules", "octoswitch.mdc"), "utf8"), /^---\ndescription/);
 assert.ok(fs.existsSync(path.join(proj, ".github", "copilot-instructions.md")));
 console.log("init ok");
 fs.rmSync(proj, { recursive: true, force: true }); fs.rmSync(fakeHome, { recursive: true, force: true });

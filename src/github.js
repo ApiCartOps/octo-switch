@@ -10,7 +10,7 @@ export async function gh(acct, path, { method = "GET", body } = {}) {
       Authorization: `Bearer ${acct.token}`,
       Accept: "application/vnd.github+json",
       "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "github-multi-mcp",
+      "User-Agent": "octoswitch",
       ...(body && { "content-type": "application/json" }),
     },
     body: body && JSON.stringify(body),

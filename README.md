@@ -1,4 +1,10 @@
-# github-multi-mcp
+<p align="center"><img src="assets/logo.svg" width="96" alt="Octoswitch logo"></p>
+
+<h1 align="center">Octoswitch</h1>
+
+<p align="center"><b>One MCP server, every GitHub account.</b><br>Routes each call to the right token, for any AI agent.</p>
+
+<p align="center"><img alt="license" src="https://img.shields.io/badge/license-MIT-2dd4bf"> <img alt="node" src="https://img.shields.io/badge/node-%3E%3D20-2dd4bf"> <img alt="MCP" src="https://img.shields.io/badge/MCP-stdio-2dd4bf"></p>
 
 An MCP server and CLI for GitHub that manages **multiple accounts** (personal, work, orgs) and routes each call to the right token. It speaks plain MCP over stdio, so it works with any MCP-capable agent: Claude Code and Desktop, Cursor, GitHub Copilot (VS Code), Windsurf, Cline, Gemini CLI, Codex CLI, opencode, Continue, Hermes Agent, Zed and others.
 
@@ -21,7 +27,7 @@ node src/cli.js add work
 node src/cli.js list
 ```
 
-`add` asks for the token at a hidden prompt (or reads it from an env var with `--token-env=VAR`), checks it against GitHub and stores the login. Tokens are never passed on the command line, never printed, and never returned by any tool. They are stored in `~/.github-multi-mcp/accounts.json` (file mode 600).
+`add` asks for the token at a hidden prompt (or reads it from an env var with `--token-env=VAR`), checks it against GitHub and stores the login. Tokens are never passed on the command line, never printed, and never returned by any tool. They are stored in `~/.octoswitch/accounts.json` (file mode 600).
 
 Use a fine-grained or classic personal access token per account. For org repos the token must be allowed by the org.
 
@@ -46,13 +52,13 @@ node src/cli.js config hermes          # print the snippet instead of editing an
 | Cline | `cline` | `cline_mcp_settings.json` |
 | Gemini CLI | `gemini-cli` | `mcpServers` in `~/.gemini/settings.json` |
 | opencode | `opencode` | `mcp` in `~/.config/opencode/opencode.json` |
-| Codex CLI | `codex` | `[mcp_servers.github-multi]` in `~/.codex/config.toml` |
-| Continue | `continue` | `~/.continue/mcpServers/github-multi.yaml` |
+| Codex CLI | `codex` | `[mcp_servers.octoswitch]` in `~/.codex/config.toml` |
+| Continue | `continue` | `~/.continue/mcpServers/octoswitch.yaml` |
 | Hermes Agent | `hermes` | prints a YAML snippet for `~/.hermes/config.yaml` |
 | Zed | `zed` | prints a snippet for `settings.json` |
 | anything else | `generic` | prints the standard `mcpServers` JSON |
 
-Config locations differ between versions of these tools, so check the printed path if an agent does not pick it up. Use `--npx` to register `npx -y github-multi-mcp mcp` instead of a path to this checkout (once published), and `--name=NAME` to use a different server name.
+Config locations differ between versions of these tools, so check the printed path if an agent does not pick it up. Use `--npx` to register `npx -y octoswitch mcp` instead of a path to this checkout (once published), and `--name=NAME` to use a different server name.
 
 ### Project instructions
 
@@ -61,7 +67,7 @@ node src/cli.js init              # AGENTS.md, plus any of CLAUDE.md / GEMINI.md
 node src/cli.js init --all        # write all five
 ```
 
-This adds a short, marked block telling the agent to use the `gh_*` tools and to confirm the account before any write. Re-running updates the block in place. `AGENTS.md` is read by Codex, Cursor, Copilot, Windsurf, opencode, Zed and others; the other files cover Claude Code (`CLAUDE.md`), Gemini CLI (`GEMINI.md`), GitHub Copilot (`.github/copilot-instructions.md`) and Cursor (`.cursor/rules/github-multi.mdc`).
+This adds a short, marked block telling the agent to use the `gh_*` tools and to confirm the account before any write. Re-running updates the block in place. `AGENTS.md` is read by Codex, Cursor, Copilot, Windsurf, opencode, Zed and others; the other files cover Claude Code (`CLAUDE.md`), Gemini CLI (`GEMINI.md`), GitHub Copilot (`.github/copilot-instructions.md`) and Cursor (`.cursor/rules/octoswitch.mdc`).
 
 ## What it exposes
 
@@ -75,9 +81,9 @@ This adds a short, marked block telling the agent to use the `gh_*` tools and to
 
 **Prompts** (commands, for clients that support MCP prompts): `gh_accounts`, `gh_triage`, `gh_review_pr`, `gh_new_issue`. They take one optional argument such as `owner/repo` or `owner/repo 42`.
 
-**Resource**: `github-multi://accounts` (names and logins only).
+**Resource**: `octoswitch://accounts` (names and logins only).
 
-**Claude Code extras** (installed by `install claude-code`): the `github-multi` skill in `~/.claude/skills/` and the slash commands `/gh-accounts`, `/gh-triage`, `/gh-review-pr`, `/gh-new-issue` in `~/.claude/commands/`. The sources live in [`content/`](content), including a standard `SKILL.md` you can copy into any agent that supports Agent Skills.
+**Claude Code extras** (installed by `install claude-code`): the `octoswitch` skill in `~/.claude/skills/` and the slash commands `/gh-accounts`, `/gh-triage`, `/gh-review-pr`, `/gh-new-issue` in `~/.claude/commands/`. The sources live in [`content/`](content), including a standard `SKILL.md` you can copy into any agent that supports Agent Skills.
 
 ## CLI reference
 

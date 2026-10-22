@@ -2,7 +2,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const dir = process.env.GITHUB_MULTI_MCP_HOME ?? path.join(os.homedir(), ".github-multi-mcp");
+/** ~/.octoswitch, or the pre-rename ~/.github-multi-mcp if that is where the accounts already are. */
+function homeDir() {
+  const env = process.env.OCTOSWITCH_HOME ?? process.env.GITHUB_MULTI_MCP_HOME;
+  if (env) return env;
+  const next = path.join(os.homedir(), ".octoswitch");
+  const legacy = path.join(os.homedir(), ".github-multi-mcp");
+  return !fs.existsSync(next) && fs.existsSync(legacy) ? legacy : next;
+}
+
+const dir = homeDir();
 const file = path.join(dir, "accounts.json");
 
 function read() {
@@ -55,7 +64,7 @@ export function setDefault(name) {
 export function resolveAccount({ account, owner } = {}) {
   const d = read();
   const names = Object.keys(d.accounts);
-  if (!names.length) throw new Error("No accounts configured. Run: github-multi-mcp add <name>");
+  if (!names.length) throw new Error("No accounts configured. Run: octoswitch add <name>");
   const byName = (n) => d.accounts[n] && { name: n, ...d.accounts[n] };
   if (account) {
     const hit = byName(account) ?? names.map(byName).find((a) => a.login.toLowerCase() === account.toLowerCase());
@@ -66,6 +75,6 @@ export function resolveAccount({ account, owner } = {}) {
     const hit = names.map(byName).find((a) => a.login.toLowerCase() === owner.toLowerCase());
     if (hit) return hit;
   }
-  if (!d.default) throw new Error("No default account. Pass `account` or run: github-multi-mcp default <name>");
+  if (!d.default) throw new Error("No default account. Pass `account` or run: octoswitch default <name>");
   return byName(d.default);
 }

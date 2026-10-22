@@ -1,6 +1,6 @@
-## GitHub with multiple accounts (github-multi MCP)
+## GitHub with multiple accounts (octoswitch MCP)
 
-This project has the `github-multi` MCP server. It holds several named GitHub accounts and picks a token per call. Prefer its `gh_*` tools over `gh`, raw API calls or other GitHub servers when the work may involve more than one account.
+This project has the `octoswitch` MCP server. It holds several named GitHub accounts and picks a token per call. Prefer its `gh_*` tools over `gh`, raw API calls or other GitHub servers when the work may involve more than one account.
 
 - Account routing: an explicit `account` argument (name or login), else the account whose login matches the repo owner, else the default account.
 - Start with `gh_list_accounts` if you are unsure which accounts exist. Tokens are never exposed.

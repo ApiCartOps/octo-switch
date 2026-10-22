@@ -19,7 +19,7 @@ const account = z.string().optional().describe(
 const repo = z.string().describe('Repository as "owner/name"');
 
 export async function serve() {
-  const server = new McpServer({ name: "github-multi-mcp", version: "0.2.0" }, { instructions: instructions() });
+  const server = new McpServer({ name: "octoswitch", title: "Octoswitch", version: "0.2.0" }, { instructions: instructions() });
 
   server.tool("gh_list_accounts", "List configured GitHub accounts (names and logins only, never tokens) and which is the default.", {}, wrap(async () => listAccounts()));
   server.tool("gh_whoami", "Show the GitHub user behind an account.", { account }, wrap(g.whoami));
@@ -55,7 +55,7 @@ export async function serve() {
       ({ arguments: a }) => ({ messages: [{ role: "user", content: { type: "text", text: c.body.replaceAll("$ARGUMENTS", a ?? "(ask me)") } }] }));
   }
 
-  server.resource("accounts", "github-multi://accounts", { description: "Configured accounts (no tokens)", mimeType: "application/json" },
+  server.resource("accounts", "octoswitch://accounts", { description: "Configured accounts (no tokens)", mimeType: "application/json" },
     async (uri) => ({ contents: [{ uri: uri.href, mimeType: "application/json", text: JSON.stringify(listAccounts(), null, 2) }] }));
 
   await server.connect(new StdioServerTransport());

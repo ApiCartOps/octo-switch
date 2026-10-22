@@ -1,11 +1,11 @@
 {
-  "name": "github-multi-mcp",
+  "name": "octoswitch",
   "version": "0.2.0",
-  "description": "Agent-agnostic MCP server and CLI for GitHub with multiple accounts. Works with Claude, Cursor, Copilot, Codex, Gemini, Windsurf, Hermes and more.",
+  "description": "One MCP server, every GitHub account. Routes each call to the right token for Claude, Cursor, Copilot, Codex, Gemini, Windsurf, Hermes and more.",
   "type": "module",
   "license": "MIT",
   "bin": {
-    "github-multi-mcp": "src/cli.js"
+    "octoswitch": "src/cli.js"
   },
   "engines": {
     "node": ">=20"

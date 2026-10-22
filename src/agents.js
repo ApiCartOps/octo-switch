@@ -45,7 +45,7 @@ export const AGENTS = {
 };
 
 export function serverCommand({ npx = false } = {}) {
-  if (npx) return { command: "npx", args: ["-y", "github-multi-mcp", "mcp"] };
+  if (npx) return { command: "npx", args: ["-y", "octoswitch", "mcp"] };
   return { command: "node", args: [path.resolve(contentDir, "..", "src", "cli.js"), "mcp"] };
 }
 
@@ -62,12 +62,12 @@ export function detect(a) {
 function readJson(f) {
   const t = readText(f);
   if (t === null || !t.trim()) return {};
-  try { return JSON.parse(t); } catch { throw new Error(`${f} is not plain JSON (comments?), so it was not edited. Use: github-multi-mcp config <agent>`); }
+  try { return JSON.parse(t); } catch { throw new Error(`${f} is not plain JSON (comments?), so it was not edited. Use: octoswitch config <agent>`); }
 }
 
 const tomlRe = (name) => new RegExp(`^\\[mcp_servers\\.${name}\\][\\s\\S]*?(?=^\\[|(?![\\s\\S]))`, "m");
 const agentOf = (id) => {
-  if (!AGENTS[id]) throw new Error(`Unknown agent "${id}". Run: github-multi-mcp agents`);
+  if (!AGENTS[id]) throw new Error(`Unknown agent "${id}". Run: octoswitch agents`);
   return AGENTS[id];
 };
 
@@ -128,42 +128,43 @@ const claudeDir = path.join(home, ".claude");
 function installClaudeExtras({ dryRun }) {
   const cmds = commands();
   const files = [
-    [path.join(claudeDir, "skills", "github-multi", "SKILL.md"), path.join(contentDir, "skill", "SKILL.md")],
+    [path.join(claudeDir, "skills", "octoswitch", "SKILL.md"), path.join(contentDir, "skill", "SKILL.md")],
     ...cmds.map((c) => [path.join(claudeDir, "commands", `${c.name}.md`), path.join(contentDir, "commands", `${c.name}.md`)]),
   ];
   if (!dryRun) for (const [dest, src] of files) writeText(dest, fs.readFileSync(src, "utf8"));
-  return `Claude Code: ${dryRun ? "would install" : "installed"} skill "github-multi" and slash commands ${cmds.map((c) => "/" + c.name).join(", ")}`;
+  return `Claude Code: ${dryRun ? "would install" : "installed"} skill "octoswitch" and slash commands ${cmds.map((c) => "/" + c.name).join(", ")}`;
 }
 
 function uninstallClaudeExtras() {
-  fs.rmSync(path.join(claudeDir, "skills", "github-multi"), { recursive: true, force: true });
+  fs.rmSync(path.join(claudeDir, "skills", "octoswitch"), { recursive: true, force: true });
   for (const c of commands()) fs.rmSync(path.join(claudeDir, "commands", `${c.name}.md`), { force: true });
   return " and its skill and slash commands";
 }
 
 // ---- Project instruction files, for agents that read them ----
-const START = "<!-- github-multi-mcp:start -->";
-const END = "<!-- github-multi-mcp:end -->";
+const START = "<!-- octoswitch:start -->";
+const END = "<!-- octoswitch:end -->";
 const TARGETS = {
   agents: { file: "AGENTS.md", who: "Codex, Cursor, Copilot, Windsurf, opencode, Zed, Hermes and others" },
   claude: { file: "CLAUDE.md", who: "Claude Code" },
   gemini: { file: "GEMINI.md", who: "Gemini CLI" },
   copilot: { file: path.join(".github", "copilot-instructions.md"), who: "GitHub Copilot" },
-  cursor: { file: path.join(".cursor", "rules", "github-multi.mdc"), who: "Cursor rules",
-    wrap: (b) => `---\ndescription: Use the github-multi MCP server for GitHub work\nalwaysApply: true\n---\n${b}` },
+  cursor: { file: path.join(".cursor", "rules", "octoswitch.mdc"), who: "Cursor rules",
+    wrap: (b) => `---\ndescription: Use the octoswitch MCP server for GitHub work\nalwaysApply: true\n---\n${b}` },
 };
 export const initTargets = Object.keys(TARGETS);
 
 /** Add (or refresh) the instruction block in each target file under `dir`. Idempotent. */
 export function init(dir, only, { dryRun = false } = {}) {
   const block = `${START}\n${instructions().trim()}\n${END}\n`;
-  const blockRe = new RegExp(`${START}[\\s\\S]*?${END}\\n?`);
+  // Also matches the markers used before the rename.
+  const blockRe = /<!-- (?:octoswitch|github-multi-mcp):start -->[\s\S]*?<!-- (?:octoswitch|github-multi-mcp):end -->\n?/;
   return only.map((id) => {
     const t = TARGETS[id];
     if (!t) throw new Error(`Unknown target "${id}". Choose from: ${initTargets.join(", ")}`);
     const f = path.join(dir, t.file);
     const cur = readText(f);
-    const mode = cur === null ? "create" : cur.includes(START) ? "update" : "append";
+    const mode = cur === null ? "create" : blockRe.test(cur) ? "update" : "append";
     const next = mode === "create" ? (t.wrap ? t.wrap(block) : block)
       : mode === "update" ? cur.replace(blockRe, () => block)
       : `${cur}${cur.endsWith("\n") ? "" : "\n"}\n${block}`;
