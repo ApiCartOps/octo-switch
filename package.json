@@ -1,0 +1,20 @@
+{
+  "name": "github-multi-mcp",
+  "version": "0.1.0",
+  "description": "MCP server and CLI for GitHub that manages multiple accounts (personal, orgs, work)",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "github-multi-mcp": "src/cli.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "scripts": {
+    "test": "node test/smoke.mjs"
+  }
+}
