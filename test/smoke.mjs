@@ -112,7 +112,8 @@ let c = rd(cfgOf(".cursor", "mcp.json")).mcpServers;
 assert.equal(c.other.command, "x"); assert.equal(c["octoswitch"].command, "node"); assert.match(c["octoswitch"].args.at(-1), /^mcp$/);
 assert.match((await cli("install", "cursor")).stdout, /already installed/);
 await cli("install", "vscode"); // user-level mcp.json uses "servers" + type
-assert.equal(rd(cfgOf("AppData", "Code", "User", "mcp.json")).servers["octoswitch"].type, "stdio");
+const appSupport = process.platform === "win32" ? cfgOf("AppData") : process.platform === "darwin" ? cfgOf("Library", "Application Support") : cfgOf(".config");
+assert.equal(rd(path.join(appSupport, "Code", "User", "mcp.json")).servers["octoswitch"].type, "stdio");
 await cli("install", "opencode");
 assert.equal(rd(cfgOf(".config", "opencode", "opencode.json")).mcp["octoswitch"].type, "local");
 await cli("install", "codex");
