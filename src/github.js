@@ -5,6 +5,7 @@ const API = process.env.GITHUB_API_URL ?? "https://api.github.com";
 export async function gh(acct, path, { method = "GET", body } = {}) {
   const r = await fetch(`${API}${path}`, {
     method,
+    signal: AbortSignal.timeout(20000),
     headers: {
       Authorization: `Bearer ${acct.token}`,
       Accept: "application/vnd.github+json",
@@ -13,6 +14,9 @@ export async function gh(acct, path, { method = "GET", body } = {}) {
       ...(body && { "content-type": "application/json" }),
     },
     body: body && JSON.stringify(body),
+  }).catch((e) => {
+    const why = e.cause?.code ?? e.cause?.message ?? e.name;
+    throw new Error(`Could not reach ${API} (${why}). Check your network, VPN or proxy, then retry.`);
   });
   const text = await r.text();
   if (!r.ok) throw new Error(`GitHub ${r.status} (account "${acct.name ?? acct.login}"): ${text.slice(0, 500)}`);
